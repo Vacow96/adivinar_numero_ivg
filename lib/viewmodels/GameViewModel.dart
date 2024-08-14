@@ -5,62 +5,91 @@ import 'package:flutter/material.dart';
 
 import '../models/GameModel.dart';
 
-class GameViewModel with ChangeNotifier {
-  late GameModel _game;
-  late int _range;
-  late int _maxAttempts;
+enum Difficulty { easy, medium, hard, extreme }
 
-  GameModel get game => _game;
+class GameViewModel extends ChangeNotifier {
+  GameModel? _gameModel;
+  Difficulty? _difficulty;
+  TextEditingController guessController = TextEditingController();
+  String? inputError;
+  String resultMessage = '';
 
-  GameViewModel() {
-    _initializeGame(10, 5); // Default to Easy
+  void setDifficulty(Difficulty difficulty) {
+    _difficulty = difficulty;
+    _startNewGame();
   }
 
-  void _initializeGame(int range, int maxAttempts) {
-    _range = range;
-    _maxAttempts = maxAttempts;
-    _game = GameModel(
-      secretNumber: Random().nextInt(_range) + 1,
-      attempts: 0,
-      greaterGuesses: [],
-      lesserGuesses: [],
-      maxAttempts: _maxAttempts,
+  void _startNewGame() {
+    int range;
+    int attempts;
+
+    switch (_difficulty) {
+      case Difficulty.easy:
+        range = 10;
+        attempts = 5;
+        break;
+      case Difficulty.medium:
+        range = 20;
+        attempts = 8;
+        break;
+      case Difficulty.hard:
+        range = 100;
+        attempts = 15;
+        break;
+      case Difficulty.extreme:
+        range = 1000;
+        attempts = 25;
+        break;
+      default:
+        range = 10;
+        attempts = 5;
+    }
+
+    _gameModel = GameModel(
+      secretNumber: Random().nextInt(range) + 1,
+      maxAttempts: attempts,
+      guesses: [],
+      guessResults: [],
     );
+
+    resultMessage = '';
+    guessController.clear();
+    inputError = null;
     notifyListeners();
   }
 
-  void setDifficulty(String difficulty) {
-    switch (difficulty) {
-      case 'Fácil':
-        _initializeGame(10, 5);
-        break;
-      case 'Medio':
-        _initializeGame(20, 8);
-        break;
-      case 'Avanzado':
-        _initializeGame(100, 15);
-        break;
-      case 'Extremo':
-        _initializeGame(1000, 25);
-        break;
+  void makeGuess() {
+    if (_gameModel == null) return;
+
+    final guess = int.tryParse(guessController.text);
+    if (guess == null || guess < 1 || guess > (_gameModel!.secretNumber * 2)) {
+      inputError = 'Ingrese un número válido dentro del rango permitido';
+      notifyListeners();
+      return;
     }
+
+    inputError = null;
+    _gameModel!.guesses.add(guess);
+    final isCorrect = guess == _gameModel!.secretNumber;
+    _gameModel!.guessResults.add(isCorrect);
+
+    if (isCorrect) {
+      resultMessage = '¡Correcto! Adivinaste el número secreto.';
+    } else {
+      resultMessage = 'Incorrecto. Sigue intentando.';
+    }
+
+    if (_gameModel!.guesses.length >= _gameModel!.maxAttempts) {
+      resultMessage = isCorrect ? resultMessage : 'No adivinaste el número secreto.';
+    }
+
+    notifyListeners();
   }
 
-  String makeGuess(int guess) {
-    if (guess < 1 || guess > _range) {
-      return 'Por favor, ingrese un número entre 1 y $_range.';
-    }
-    _game.attempts++;
-    if (guess > _game.secretNumber) {
-      _game.greaterGuesses.add(guess);
-      notifyListeners();
-      return 'El número es menor que $guess.';
-    } else if (guess < _game.secretNumber) {
-      _game.lesserGuesses.add(guess);
-      notifyListeners();
-      return 'El número es mayor que $guess.';
-    } else {
-      return '¡Felicidades! Has adivinado el número $guess.';
-    }
+  void resetGame() {
+    _startNewGame();
   }
+
+  List<int> get guesses => _gameModel?.guesses ?? [];
+  List<bool> get guessResults => _gameModel?.guessResults ?? [];
 }

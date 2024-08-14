@@ -1,18 +1,13 @@
 class GameModel {
-  int secretNumber;
-  int attempts;
-  List<int> greaterGuesses;
-  List<int> lesserGuesses;
-  int maxAttempts;
+  final int secretNumber;
+  final int maxAttempts;
+  final List<int> guesses;
+  final List<bool> guessResults; // true if correct, false otherwise
 
   GameModel({
     required this.secretNumber,
-    required this.attempts,
-    required this.greaterGuesses,
-    required this.lesserGuesses,
     required this.maxAttempts,
+    required this.guesses,
+    required this.guessResults,
   });
-
-
-
 }
