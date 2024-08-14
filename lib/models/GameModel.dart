@@ -2,7 +2,7 @@ class GameModel {
   final int secretNumber;
   final int maxAttempts;
   final List<int> guesses;
-  final List<bool> guessResults; // true if correct, false otherwise
+  final List<bool> guessResults;
 
   GameModel({
     required this.secretNumber,
